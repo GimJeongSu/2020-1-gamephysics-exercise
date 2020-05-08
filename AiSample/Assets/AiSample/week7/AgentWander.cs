@@ -8,24 +8,36 @@ public class AgentWander : MonoBehaviour
 
     public Vector3 _velocity = Vector3.zero;
 
+    private float max_force = 0.1f;
+
     [SerializeField]
-    private float _maxSpeed = 1.0f;
+    private float _maxSpeed = 0.1f;
 
     [SerializeField]
     private float _deceleration = 10.0f;
 
-    private float radius = 5.0f;
+    private float radius = 10.0f;
 
     private float m_dwanderJitter = 1.0f;
-    private float wander_Distance = 5.0f;
+    private float wander_Distance = 10.0f;
     [SerializeField]
     private int result;
     private int theata;
     private bool _isWander = false;
     Vector3 m_wanderTarget = Vector3.zero;
+    Vector3 steering = Vector3.zero;
+
+    float timer;
+    int waitTime;
     // Update is called once per frame
+
+        void Start()
+    {
+        waitTime =1;
+    }
     void Update()
     {
+        timer += Time.deltaTime;
         if (Input.GetKey(KeyCode.Y))
         {
             _isWander = true;
@@ -33,10 +45,17 @@ public class AgentWander : MonoBehaviour
         if (_isWander)
         {
             theata = Random.Range(0, 360);
-            m_wanderTarget = vec3((radius * Mathf.Cos(theata)), (radius * Mathf.Sin(theata)));
-            _velocity = _velocity + wander();
 
+            //길이제한
+            if (waitTime < timer) { 
+            steering  = Vector3.ClampMagnitude(seek(wander())+_velocity, max_force);
+            steering.y = 0;
+            _velocity = steering;
+                timer = 0;
+            }
+          
             transform.position = transform.position + _velocity;
+      
         }
     }
 
@@ -55,8 +74,10 @@ public class AgentWander : MonoBehaviour
     //}
     private Vector3 wander()
     {
+       
+            m_wanderTarget = vec3((radius * Mathf.Cos(theata)), (radius * Mathf.Sin(theata)));
         float JitterThisTimeslice = m_dwanderJitter * Time.deltaTime;
-
+ 
         m_wanderTarget += vec3(RandomClamped() * JitterThisTimeslice, RandomClamped() * JitterThisTimeslice);
 
         m_wanderTarget.Normalize();
@@ -67,15 +88,16 @@ public class AgentWander : MonoBehaviour
         Vector3 target = m_wanderTarget + vec3(wander_Distance, 0);
 
         Vector3 Target = transform.position + target;
-
-        return arrive(Target);
+       
+      
+        return Target;
 
     }
 
     private float RandomClamped()
     {
         result = Random.Range(-1, 2);
-        print(result);
+       
         return result;
     }
     private Vector3 vec3(float a, float b)
@@ -88,24 +110,17 @@ public class AgentWander : MonoBehaviour
         return z;
 
     }
-    private Vector3 arrive(Vector3 target_pos)
+    private Vector3 seek(Vector3 target_pos)
     {
-        float distance = Vector3.Distance(target_pos, transform.position);
-
-        if (distance > 0.0f)
+        // 방향 변경을 위함.
+        Vector3 distance = target_pos - transform.position;
+        if (distance.sqrMagnitude > 0.005f)
         {
-            Vector3 to_target = target_pos - transform.position;
-
-            float _speed = distance / _deceleration;
-
-            // 최대 속도로 제한.
-            _speed = Mathf.Min(_speed, _maxSpeed);
-
-            Vector3 desired_velocity = to_target / distance * _speed;
-
-            return (desired_velocity - _velocity);
+            transform.forward = distance.normalized;
         }
 
-        return Vector3.zero;
+        Vector3 desired_velocity = distance.normalized * _maxSpeed;
+
+        return (desired_velocity - _velocity);
     }
 }
