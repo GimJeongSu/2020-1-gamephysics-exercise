@@ -5,20 +5,26 @@ using UnityEngine;
 
 public class AgentWander : MonoBehaviour
 {
-
+    //속도
     public Vector3 _velocity = Vector3.zero;
 
-    private float max_force = 0.1f;
+    //최대 벡터 길이
+    private float max_length = 0.1f;
 
     [SerializeField]
+    //최대 속도
     private float _maxSpeed = 0.1f;
 
     [SerializeField]
     private float _deceleration = 10.0f;
 
+    //반지름
     private float radius = 10.0f;
 
+    
     private float m_dwanderJitter = 1.0f;
+    
+    //10.0f 앞에 설정
     private float wander_Distance = 10.0f;
     [SerializeField]
     private int result;
@@ -33,6 +39,7 @@ public class AgentWander : MonoBehaviour
 
         void Start()
     {
+        //대기 시간 1초
         waitTime =1;
     }
     void Update()
@@ -46,9 +53,10 @@ public class AgentWander : MonoBehaviour
         {
             theata = Random.Range(0, 360);
 
+            //시간이 되면 실행
+            if (waitTime < timer) {
             //길이제한
-            if (waitTime < timer) { 
-            steering  = Vector3.ClampMagnitude(seek(wander())+_velocity, max_force);
+            steering = Vector3.ClampMagnitude(seek(wander())+_velocity, max_length);
             steering.y = 0;
             _velocity = steering;
                 timer = 0;
@@ -59,6 +67,7 @@ public class AgentWander : MonoBehaviour
         }
     }
 
+    //벡터 길이비교
     //private Vector3 truncate(Vector3 ve1 , Vector3 ve2)
     //{
     //    float min;
@@ -74,14 +83,18 @@ public class AgentWander : MonoBehaviour
     //}
     private Vector3 wander()
     {
-       
-            m_wanderTarget = vec3((radius * Mathf.Cos(theata)), (radius * Mathf.Sin(theata)));
+       //원 좌표 설정
+        m_wanderTarget = vec3((radius * Mathf.Cos(theata)), (radius * Mathf.Sin(theata)));
         float JitterThisTimeslice = m_dwanderJitter * Time.deltaTime;
  
+       
         m_wanderTarget += vec3(RandomClamped() * JitterThisTimeslice, RandomClamped() * JitterThisTimeslice);
 
+        //정규화
         m_wanderTarget.Normalize();
 
+
+        
         m_wanderTarget *= radius;
 
         
@@ -94,12 +107,14 @@ public class AgentWander : MonoBehaviour
 
     }
 
+    //-1~1 사이 랜덤값 정수 출력
     private float RandomClamped()
     {
         result = Random.Range(-1, 2);
        
         return result;
     }
+    //2D벡터 설정
     private Vector3 vec3(float a, float b)
     {
         Vector3 z = transform.position;
@@ -110,6 +125,8 @@ public class AgentWander : MonoBehaviour
         return z;
 
     }
+
+    //추적
     private Vector3 seek(Vector3 target_pos)
     {
         // 방향 변경을 위함.
