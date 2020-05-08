@@ -11,7 +11,7 @@ public class InputControlW6 : MonoBehaviour
     private Vector3 _fleePos = Vector3.zero;
 
     [SerializeField]
-    private float _maxSpeed = 1.0f;
+    private float _maxSpeed = 5.0f;
 
     [SerializeField]
     private float _deceleration = 1.0f;
@@ -44,16 +44,16 @@ public class InputControlW6 : MonoBehaviour
             }
         }
 
-        //if (Vector3.Distance(_agent.transform.position, _fleePos) < 10.0f)
-        //{
-        //    _velocity = _velocity + (flee(_fleePos) * Time.deltaTime);
-        //}
+        if (Vector3.Distance(_agent.transform.position, _fleePos) < 10.0f)
+        {
+            _velocity = _velocity + (flee(_fleePos) * Time.deltaTime);
+        }
 
         // seek
         //_velocity = _velocity + seek(_pickPos) * Time.deltaTime;
 
         // arrive
-        _velocity = _velocity + arrive(_pickPos);
+        //_velocity = _velocity + arrive(_pickPos);
 
         // 속도를 기반으로 새로운 위치 계산.
         _agent.transform.position = _agent.transform.position + (_velocity * Time.deltaTime);

@@ -5,25 +5,59 @@ using UnityEngine;
 public class Agent : MonoBehaviour
 {
     private Vector3 _pickPos = Vector3.zero;
-    private Vector3 _fleePos = Vector3.zero;
 
+
+    private Vector3 _dis = Vector3.zero;
     [SerializeField]
     private float _maxSpeed = 1.0f;
 
     [SerializeField]
     private float _deceleration = 1.0f;
 
+    private bool _isState = false;
+    private bool _isFeel = false;
+    private bool _isArrive = false;
     private bool _isSeek = false;
 
-    private Vector3 _velocity = Vector3.zero;
+    public Vector3 _velocity = Vector3.zero;
 
     private void Update()
     {
-        if (Input.GetMouseButtonUp(0))
+        
+        if (_isState == false)
         {
-            _isSeek = true;
+            //Seek
+            if (Input.GetKey(KeyCode.Q))
+            {
+               
+                _isSeek = true;
+                _isState = true;
+            }
+
+            //Feel
+            if (Input.GetKey(KeyCode.W))
+            {
+               
+                _isFeel = true;
+                _isState = true;
+            }
+
+            //Arrive
+            if (Input.GetKey(KeyCode.E))
+            {
+              
+                _isArrive = true;
+                _isState = true;
+            }
+        }
+    
+        if (_isState == true) { 
+            if (Input.GetMouseButtonUp(0))
+        {
 
             Vector3 mouse_pos = Input.mousePosition;
+
+
 
             RaycastHit hit;
             if (Physics.Raycast(Camera.main.ScreenToWorldPoint(mouse_pos), -Vector3.up, out hit, 1000))
@@ -33,33 +67,51 @@ public class Agent : MonoBehaviour
             }
         }
 
-        if (Input.GetMouseButtonUp(1))
+        float dis = Vector3.Distance(transform.position, _pickPos);
+        if ( dis< 10.0f && _isFeel == true)
         {
-            Vector3 mouse_pos = Input.mousePosition;
-
-            RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenToWorldPoint(mouse_pos), -Vector3.up, out hit, 1000))
+            _velocity = _velocity + (flee(_pickPos) * Time.deltaTime);
+            transform.position = transform.position + _velocity;
+        }
+        if (dis > 10.0f && _isFeel == true)
+        {
+            _isFeel = false;
+            _isState = false;
+        }
+            if ( _isSeek == true)
             {
-                _fleePos = hit.point;
-                _fleePos.y = 0.0f;
+                _velocity = _velocity + (seek(_pickPos) * Time.deltaTime);
+                transform.position = transform.position + _velocity;
+            }
+            if (dis < 0.1f && _isSeek == true)
+            {
+                _isSeek = false;
+                _isState = false;
+            }
+            if (_isArrive == true)
+            {
+                _velocity = _velocity + (arrive(_pickPos) * Time.deltaTime);
+                transform.position = transform.position + _velocity;
+            }
+            if (dis < 0.1f && _isArrive == true)
+            {
+                _isArrive = false;
+                _isState = false;
             }
         }
+   
 
-        // seek
-        // 3: 적당히 빠르게 해주기 위함.
-        _velocity = _velocity + (seek(_pickPos) * Time.deltaTime * 3);
-
-        // 속도를 기반으로 새로운 위치 계산.
-        transform.position = transform.position + _velocity;
+    }
+    
+    public Vector3 getPosition()
+    {
+        return transform.position;
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(_pickPos, 1.0f);
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(_fleePos, 10.0f);
     }
 
     private Vector3 seek(Vector3 target_pos)
@@ -79,6 +131,7 @@ public class Agent : MonoBehaviour
     private Vector3 flee(Vector3 target_pos)
     {
         // seek의 반대 방향 사용.
+       
         Vector3 desired_velocity = ((transform.position - target_pos).normalized) * _maxSpeed;
 
         return (desired_velocity - _velocity);
